@@ -4,12 +4,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netclient
-PKG_VERSION:=0.30.0
-PKG_RELEASE:=4
+PKG_VERSION:=1.4.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gravitl/netclient/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e86c25bca0dda02eb5207a64d7251017faeb9c00a45c4300237956aa5a6a7815
+PKG_HASH:=2a179b0d36aa25bccb153fe6139715c1cbfd5bcc89758c8b4b036ee12bdaf9a8
 
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=Apache-2.0

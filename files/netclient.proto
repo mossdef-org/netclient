@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2024 Stan Grishin <stangri@melmac.ca>
+# Copyright 2024-2026 MOSSDeF, Stan Grishin (stangri@melmac.ca)
 # Licensed to the public under the Apache License 2.0.
 
 # shellcheck disable=SC1091,SC3003,SC3043
@@ -25,44 +25,33 @@ readonly WG='/usr/bin/wg'
 
 init_proto "$@"
 
+log() {
+	logger -t 'netclient' "$*"
+}
+
 netclient_init_config() {
 #	proto_config_add_string key
 	proto_config_add_string 'l3_device'
 }
 
 proto_netclient_setup() {
-	local config="$1"
-	local interface="$2"
+	local cfg="$1" interface address addresses
 	local device key
-	local addresses address port subnet
 
+	config_load network
 	json_get_vars device key
-	device="${device:-$interface}"
-	device="${device:-$config}"
+	device="${device:-$cfg}"
 	device="${device:-netmaker}"
+	interface="$device"
 
-	logger -t 'netclient' "Setting up $interface :: $config :: $device"
+	log "Setting up ${interface} from netclient daemon."
+	proto_run_command "$cfg" "$PROG" daemon
 
-	"$IP" link del dev "$device" >/dev/null 2>&1
-	"$IP" link add dev "$device" type wireguard || {
-		echo "Failed to create wireguard device ($interface :: $config :: $device)"
-		proto_setup_failed "$config"
-		exit 1
-	}
-
-	sleep 5
-	"$PROG" pull >/dev/null 2>&1
 	sleep 2
-	proto_init_update  "$config" 1
-#	proto_run_command "$config" "$PROG" daemon
+	proto_init_update "${interface}" 1
 
-	"$WG" show "$config" >/dev/null 2>&1 || {
-		logger -t 'netclient' "Failed to set up ($interface :: $config :: $device)"
-		proto_setup_failed "$config"
-		exit 1
-	}
-
-	addresses="$("$IP" route list dev "$device" | awk '{print $NF}')"
+	addresses="$(ip -4 a list dev "$interface" 2>/dev/null | grep inet | awk '{print $2}' | awk -F "/" '{print $1}')"
+	log "Running ${interface} from netclient daemon${addresses+: with addresses: $addresses}."
 	for address in ${addresses}; do
 		case "${address}" in
 			*:*/*)
@@ -70,7 +59,7 @@ proto_netclient_setup() {
 				;;
 			*.*/*)
 				proto_add_ipv4_address "${address%%/*}" "${address##*/}"
-				subnet="$(ipcalc.sh "${address%%/*}/24" | grep NETWORK | cut -d= -f2)"
+				local subnet=$(ipcalc.sh "${address%%/*}/24" | grep NETWORK | cut -d= -f2)
 				proto_add_ipv4_route "${subnet}" "24" "${address%%/*}"
 				;;
 			*:*)
@@ -78,26 +67,12 @@ proto_netclient_setup() {
 				;;
 			*.*)
 				proto_add_ipv4_address "${address%%/*}" "32"
-				subnet="$(ipcalc.sh "${address%%/*}/24" | grep NETWORK | cut -d= -f2)"
+				local subnet=$(ipcalc.sh "${address%%/*}/24" | grep NETWORK | cut -d= -f2)
 				proto_add_ipv4_route "${subnet}" "24" "${address%%/*}"
 				;;
 		esac
 	done
-
-# shellcheck disable=SC2034
-#	"$WG" show "$config" endpoints | \
-#	sed -E 's/\[?([0-9.:a-f]+)\]?:([0-9]+)/\1 \2/' | \
-#	while IFS=$'\t ' read -r key address port; do
-#		[ -n "$port" ] || continue
-#		proto_add_host_dependency "$config" "$address"
-#	done
-
-	proto_send_update "$config"
-
-#	json_init
-#	json_add_string name "$device"
-#	json_add_string key "$key"
-#	ubus call netclient network_add "$(json_dump)"
+	proto_send_update "${cfg}"
 }
 
 proto_netclient_teardown() {
