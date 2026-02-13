@@ -29,7 +29,7 @@ include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 define Package/netclient
   SECTION:=net
   CATEGORY:=Network
-  URL:=https://github.com/stangri/netclient/
+  URL:=https://github.com/mossdef-org/netclient/
   TITLE:=netclient
   DEPENDS:=$(GO_ARCH_DEPENDS) +wireguard-tools
 	DEPENDS+=+!BUSYBOX_DEFAULT_AWK:gawk
