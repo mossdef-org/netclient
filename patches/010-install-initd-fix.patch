@@ -38,7 +38,7 @@
  	return nil
  }
  
-@@ -58,18 +33,5 @@ func restartInitd() error {
+@@ -62,18 +37,5 @@ func restartInitd() error {
  
  // removeInitd - removes initd daemon
  func removeInitd() error {
