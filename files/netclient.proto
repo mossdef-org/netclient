@@ -35,23 +35,23 @@ netclient_init_config() {
 }
 
 proto_netclient_setup() {
-	local cfg="$1" interface address addresses
+	local config="$1" interface address addresses
 	local device key
 
 	config_load network
 	json_get_vars device key
-	device="${device:-$cfg}"
+	device="${device:-${config}}"
 	device="${device:-netmaker}"
 	interface="$device"
 
 	log "Setting up ${interface} from netclient daemon."
-	proto_run_command "$cfg" "$PROG" daemon
+	proto_run_command "$config" "$PROG" daemon
 
 	sleep 2
 	proto_init_update "${interface}" 1
 
 	addresses="$(ip -4 a list dev "$interface" 2>/dev/null | grep inet | awk '{print $2}' | awk -F "/" '{print $1}')"
-	log "Running ${interface} from netclient daemon${addresses+: with addresses: $addresses}."
+	log "Running ${interface} from netclient daemon${addresses+: with addresses: ${addresses}}."
 	for address in ${addresses}; do
 		case "${address}" in
 			*:*/*)
@@ -72,7 +72,7 @@ proto_netclient_setup() {
 				;;
 		esac
 	done
-	proto_send_update "${cfg}"
+	proto_send_update "${config}"
 }
 
 proto_netclient_teardown() {
@@ -81,8 +81,8 @@ proto_netclient_teardown() {
 	local device key
 
 	json_get_vars device key
-	device="${device:-$interface}"
-	device="${device:-$config}"
+	device="${device:-${interface}}"
+	device="${device:-${config}}"
 	device="${device:-netmaker}"
 
 	logger -t 'netclient' "Tearing down $interface :: $config :: $device"
